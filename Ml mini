@@ -1,0 +1,57 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("bank_churn.csv")   # upload your dataset
+print("Dataset Loaded Successfully\n")
+print(df.head())
+le = LabelEncoder()
+df['Geography'] = le.fit_transform(df['Geography'])
+df['Gender'] = le.fit_transform(df['Gender'])
+
+X = df[['CreditScore', 'Geography', 'Gender', 'Age', 'Tenure',
+        'Balance', 'NumOfProducts', 'HasCrCard',
+        'IsActiveMember', 'EstimatedSalary']]
+
+y = df['Exited']   # Target Variable: 1 = Churn, 0 = Stay
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+
+model = RandomForestClassifier(n_estimators=200, random_state=42)
+model.fit(X_train, y_train)
+
+
+y_pred = model.predict(X_test)
+
+print("\nMODEL PERFORMANCE")
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+importance = model.feature_importances_
+
+plt.figure(figsize=(10, 5))
+plt.barh(X.columns, importance)
+plt.title("Feature Importance")
+plt.xlabel("Importance Level")
+plt.ylabel("Features")
+plt.show()
+
+sample = [[650, 1, 0, 35, 5, 50000, 2, 1, 1, 60000]]
+sample_scaled = sc.transform(sample)
+prediction = model.predict(sample_scaled)
+
+print("\nSINGLE CUSTOMER PREDICTION:")
+if prediction[0] == 1:
+    print("Customer WILL CHURN")
+else:
+    print("Customer WILL NOT CHURN")
